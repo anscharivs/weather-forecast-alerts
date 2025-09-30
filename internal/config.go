@@ -1,5 +1,11 @@
 package config
 
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
 type Config struct {
 	DBUrl  string
 	APIKey string
@@ -7,10 +13,14 @@ type Config struct {
 
 func LoadConfig() Config {
 
-	// Load from an env
+	err := godotenv.Load()
+
+	if err != nil {
+		panic("ENV error")
+	}
 
 	return Config{
-		DBUrl:  "",
-		APIKey: "",
+		DBUrl:  os.Getenv("DATABASE_URL"),
+		APIKey: os.Getenv("OPENWEATHER_API_KEY"),
 	}
 }
