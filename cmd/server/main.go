@@ -21,5 +21,5 @@ func main() {
 
 	api.RegisterRoutes(r, db)
 
-	r.Run(":8081") // Run local server
+	r.Run(":8080") // Run local server
 }

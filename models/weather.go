@@ -6,4 +6,6 @@ type Weather struct {
 	gorm.Model
 	CityID      uint
 	Temperature float64
+	Humidity    int
+	Description string
 }

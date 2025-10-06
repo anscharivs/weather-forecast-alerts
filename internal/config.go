@@ -13,11 +13,11 @@ type Config struct {
 
 func LoadConfig() Config {
 
-	err := godotenv.Load()
+	_ = godotenv.Load()
 
-	if err != nil {
-		panic("ENV error")
-	}
+	// if err != nil {
+	// 	panic("ENV error")
+	// }
 
 	return Config{
 		DBUrl:  os.Getenv("DATABASE_URL"),
