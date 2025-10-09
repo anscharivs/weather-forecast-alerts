@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	config "github.com/anscharivs/weather-forecast-alerts/internal"
 	"github.com/anscharivs/weather-forecast-alerts/models"
@@ -13,11 +14,16 @@ import (
 type apiResponse struct {
 	Main struct {
 		Temp     float64 `json:"temp"`
+		TempMin  float64 `json:"temp_min"`
+		TempMax  float64 `json:"temp_max"`
 		Humidity int     `json:"humidity"`
+		Pressure int     `json:"pressure"`
 	} `json:"main"`
 	Weather []struct {
 		Description string `json:"description"`
 	} `json:"weather"`
+	Dt         int64 `json:"dt"`
+	Visibility int   `json:"visibility"`
 }
 
 func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
@@ -27,7 +33,7 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 	db.Find(&cities)
 
 	for _, city := range cities {
-		url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric", city.Name, cfg.APIKey)
+		url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric&lang=es", city.Name, cfg.APIKey)
 
 		res, err := http.Get(url)
 
@@ -46,10 +52,15 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 		}
 
 		weather := models.Weather{
-			CityID:      city.ID,
-			Temperature: data.Main.Temp,
-			Humidity:    data.Main.Humidity,
-			Description: data.Weather[0].Description,
+			CityID:         city.ID,
+			Temperature:    data.Main.Temp,
+			MinTemperature: data.Main.TempMin,
+			MaxTemperature: data.Main.TempMax,
+			Pressure:       data.Main.Pressure,
+			Humidity:       data.Main.Humidity,
+			Visibility:     data.Visibility,
+			Description:    data.Weather[0].Description,
+			FetchedAt:      time.Unix(data.Dt, 0).UTC(),
 		}
 
 		db.Create(&weather)
@@ -57,4 +68,13 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 		fmt.Printf("Saved %s: %.1f°C, %s\n", city.Name, weather.Temperature, weather.Description)
 	}
 
+}
+
+func StartWeatherPolling(db *gorm.DB, cfg config.Config, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	go func() {
+		for range ticker.C {
+			FetchAndStoreWeatherData(db, cfg)
+		}
+	}()
 }
