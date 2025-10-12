@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <title>Weather</title>
+</head>
+
+<body>
+    <nav
+        class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+        <ul class="flex flex-wrap -mb-px">
+            <li class="me-2">
+                <a href="#"
+                    class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+                    aria-current="page">Clima reciente</a>
+            </li>
+            <li class="me-2">
+                <a href="#"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Nueva
+                    ciudad</a>
+            </li>
+            <li class="me-2">
+                <a href="#"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Todos
+                    los registros</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="px-10 pt-4">
+        <button id="fetchLastWeather" type="button"
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
+            Actualizar clima de las ciudades
+        </button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 m-10">
+        {{ if .weathers }}
+        {{ range .weathers }}
+        <div class="flex flex-col bg-gray-200 rounded p-4 w-full max-w-xs">
+            <div class="font-bold text-xl">{{ .CityName }}</div>
+            <div class="text-sm text-gray-500">{{ .FetchedAt }}</div>
+            <div
+                class="mt-6 text-6xl self-center inline-flex items-center justify-center rounded-lg text-indigo-400 h-24 w-24">
+                <img src="{{ .IconURL }}" alt="{{ .Description }}" width="500" height="600">
+            </div>
+            <div class="flex flex-row items-center justify-center mt-6">
+                <div class="font-medium text-6xl">{{ .TemperatureInCelsius }}°</div>
+                <div class="flex flex-col items-center ml-6">
+                    <div>{{ .Description }}</div>
+                    <div class="mt-1">
+                        <span class="text-sm"><i class="far fa-long-arrow-up"></i></span>
+                        <span class="text-sm font-light text-gray-500">{{ .MaxTemperatureInCelsius }}°C</span>
+                    </div>
+                    <div>
+                        <span class="text-sm"><i class="far fa-long-arrow-down"></i></span>
+                        <span class="text-sm font-light text-gray-500">{{ .MinTemperatureInCelsius }}°C</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-row justify-between mt-6">
+                <div class="flex flex-col items-center">
+                    <div class="font-medium text-sm">Humedad</div>
+                    <div class="text-sm text-gray-500">{{ .HumidityInPercentage }}%</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="font-medium text-sm">Presión</div>
+                    <div class="text-sm text-gray-500">{{ .PressureInhPa }} hPa</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="font-medium text-sm">Visibilidad</div>
+                    <div class="text-sm text-gray-500">{{ .VisibilityInKm }}km</div>
+                </div>
+            </div>
+        </div>
+        {{ else }}
+        No hay nada
+        {{ end }}
+        {{ end }}
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+
+        const fetchButton = document.getElementById('fetchLastWeather');
+        
+        fetchButton.addEventListener("click", (event) => {
+
+          fetch("/fetch", {
+                method: "GET",
+            })
+            .then(() => {
+                Toastify({
+                    text: "Clima actualizado. Recargando...",
+                    duration: 1000,
+                    destination: "#",
+                    newWindow: false,
+                    close: false,
+                    gravity: "top",
+                    position: "right",
+                    stopOnFocus: true,
+                    style: {
+                        background: "#FFA500",
+                        color: "#000000",
+                        'text-shadow': '2px 2px 5px white',
+                    },
+                    onClick: function () { }
+                }).showToast();
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            })
+            .catch(err => {
+                console.error("Error:", err);
+            });
+        })
+
+        const checkCities = () => {
+            fetch("/check-cities", {
+                method: "GET",
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.no_records) {
+                    Toastify({
+                    text: "Sin registros. Creando registros de muestra...",
+                    duration: 2000,
+                    destination: "#",
+                    newWindow: false,
+                    close: false,
+                    gravity: "top",
+                    position: "right",
+                    stopOnFocus: true,
+                    style: {
+                        background: "#FFA500",
+                        color: "#000000",
+                        'text-shadow': '2px 2px 5px white',
+                    },
+                    onClick: function () { }
+                }).showToast();
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+            });
+        }
+
+        checkCities();
+
+    </script>
+</body>
+
+</html>

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"time"
-
 	"github.com/anscharivs/weather-forecast-alerts/database"
 	config "github.com/anscharivs/weather-forecast-alerts/internal"
 	"github.com/anscharivs/weather-forecast-alerts/internal/api"
-	"github.com/anscharivs/weather-forecast-alerts/internal/weather"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,9 +17,11 @@ func main() {
 		return
 	}
 
-	weather.StartWeatherPolling(db, cfg, 1*time.Minute) // Goroutine
+	//weather.StartWeatherPolling(db, cfg, 1*time.Minute) // Goroutine
 
 	r := gin.Default()
+
+	r.LoadHTMLGlob("templates/*")
 
 	api.RegisterRoutes(r, db)
 

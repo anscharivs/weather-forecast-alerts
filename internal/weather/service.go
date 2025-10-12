@@ -21,6 +21,7 @@ type apiResponse struct {
 	} `json:"main"`
 	Weather []struct {
 		Description string `json:"description"`
+		Icon        string `json:"icon"`
 	} `json:"weather"`
 	Dt         int64 `json:"dt"`
 	Visibility int   `json:"visibility"`
@@ -60,6 +61,7 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 			Humidity:       data.Main.Humidity,
 			Visibility:     data.Visibility,
 			Description:    data.Weather[0].Description,
+			Icon:           data.Weather[0].Icon,
 			FetchedAt:      time.Unix(data.Dt, 0).UTC(),
 		}
 

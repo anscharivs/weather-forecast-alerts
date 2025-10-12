@@ -9,6 +9,7 @@ import (
 type Weather struct {
 	gorm.Model
 	CityID         uint
+	City           City
 	Temperature    float64
 	MinTemperature float64
 	MaxTemperature float64
@@ -16,5 +17,6 @@ type Weather struct {
 	Humidity       int
 	Visibility     int
 	Description    string
+	Icon           string
 	FetchedAt      time.Time
 }

@@ -9,5 +9,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y ca-certificates
 
+COPY templates/ ./templates
+
 COPY --from=builder /app/weather-forecast-alerts .
 CMD ["./weather-forecast-alerts"]
