@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -9,26 +10,27 @@ import (
 	"github.com/anscharivs/weather-forecast-alerts/internal/weather"
 	"github.com/anscharivs/weather-forecast-alerts/models"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/goodsign/monday"
 	"gorm.io/gorm"
 )
 
+type WeatherView struct {
+	CityName                string
+	TemperatureInCelsius    float64
+	MinTemperatureInCelsius float64
+	MaxTemperatureInCelsius float64
+	PressureInhPa           int
+	HumidityInPercentage    int
+	VisibilityInKm          int
+	Description             string
+	IconURL                 string
+	FetchedAt               string
+}
+
 func RegisterRoutes(r *gin.Engine, db *gorm.DB) {
 
 	r.GET("/", func(c *gin.Context) {
-
-		type WeatherView struct {
-			CityName                string
-			TemperatureInCelsius    float64
-			MinTemperatureInCelsius float64
-			MaxTemperatureInCelsius float64
-			PressureInhPa           int
-			HumidityInPercentage    int
-			VisibilityInKm          int
-			Description             string
-			IconURL                 string
-			FetchedAt               string
-		}
 
 		var weathers []models.Weather
 
@@ -125,6 +127,100 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB) {
 				c.JSON(http.StatusOK, gin.H{"no_records": false})
 			}
 		}
+	})
+
+	r.GET("/registers", func(c *gin.Context) {
+
+		var weathers []models.Weather
+
+		db.Preload("City").
+			Order("fetched_at DESC").
+			Find(&weathers)
+
+		var views []WeatherView
+
+		for _, w := range weathers {
+			views = append(views, WeatherView{
+				CityName:                w.City.Name,
+				TemperatureInCelsius:    math.Ceil(w.Temperature),
+				MinTemperatureInCelsius: math.Ceil(w.MinTemperature),
+				MaxTemperatureInCelsius: math.Ceil(w.MaxTemperature),
+				PressureInhPa:           w.Pressure,
+				HumidityInPercentage:    w.Humidity,
+				VisibilityInKm:          w.Visibility / 1000,
+				Description:             w.Description,
+				IconURL:                 fmt.Sprintf("https://openweathermap.org/img/wn/%s@2x.png", w.Icon),
+				FetchedAt:               monday.Format(w.FetchedAt, "02/01/2006 15:04", monday.LocaleEsES),
+			})
+		}
+
+		c.HTML(http.StatusOK, "registers.html", gin.H{
+			"weathers": views,
+		})
+
+	})
+
+	r.GET("/new-city", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "new-city.html", gin.H{})
+	})
+
+	r.POST("/new-city", func(c *gin.Context) {
+
+		type NewRegister struct {
+			Name string `form:"name" binding:"required,max=20"`
+		}
+
+		var form NewRegister
+
+		if err := c.ShouldBind(&form); err != nil {
+			var ve validator.ValidationErrors
+			if errors.As(err, &ve) {
+				errores := make(map[string]string)
+				for _, fe := range ve {
+					field := fe.Field()
+					tag := fe.Tag()
+
+					switch tag {
+					case "required":
+						errores[field] = "Este campo es obligatorio"
+					case "max":
+						errores[field] = "Debe tener como máximo " + fe.Param() + " caracteres"
+					default:
+						errores[field] = "Valor inválido"
+					}
+				}
+				var erroresStr string
+
+				for _, msg := range errores {
+					if erroresStr != "" {
+						erroresStr += ", "
+					}
+					erroresStr += msg
+				}
+
+				c.JSON(http.StatusBadRequest, gin.H{"error": erroresStr})
+
+				return
+			}
+
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if weather.ExistsInDB(db, form.Name) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "El nombre ya está registrado"})
+			return
+		}
+
+		city := models.City{Name: form.Name}
+
+		db.Create(&city)
+		cfg := config.LoadConfig()
+		weather.FetchAndStoreWeatherData(db, cfg)
+
+		c.JSON(http.StatusOK, gin.H{
+			"name": form.Name,
+		})
 	})
 
 	r.GET("/delete-weather", func(c *gin.Context) {

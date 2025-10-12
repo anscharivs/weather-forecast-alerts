@@ -14,17 +14,17 @@
         class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
         <ul class="flex flex-wrap -mb-px">
             <li class="me-2">
-                <a href="#"
+                <a href="/"
                     class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
                     aria-current="page">Clima reciente</a>
             </li>
             <li class="me-2">
-                <a href="#"
+                <a href="/new-city"
                     class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Nueva
                     ciudad</a>
             </li>
             <li class="me-2">
-                <a href="#"
+                <a href="/registers"
                     class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Todos
                     los registros</a>
             </li>
@@ -85,71 +85,71 @@
     <script>
 
         const fetchButton = document.getElementById('fetchLastWeather');
-        
+
         fetchButton.addEventListener("click", (event) => {
 
-          fetch("/fetch", {
+            fetch("/fetch", {
                 method: "GET",
             })
-            .then(() => {
-                Toastify({
-                    text: "Clima actualizado. Recargando...",
-                    duration: 1000,
-                    destination: "#",
-                    newWindow: false,
-                    close: false,
-                    gravity: "top",
-                    position: "right",
-                    stopOnFocus: true,
-                    style: {
-                        background: "#FFA500",
-                        color: "#000000",
-                        'text-shadow': '2px 2px 5px white',
-                    },
-                    onClick: function () { }
-                }).showToast();
+                .then(() => {
+                    Toastify({
+                        text: "Clima actualizado. Recargando...",
+                        duration: 1000,
+                        destination: "#",
+                        newWindow: false,
+                        close: false,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: "#FFA500",
+                            color: "#000000",
+                            'text-shadow': '2px 2px 5px white',
+                        },
+                        onClick: function () { }
+                    }).showToast();
 
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            })
-            .catch(err => {
-                console.error("Error:", err);
-            });
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                });
         })
 
         const checkCities = () => {
             fetch("/check-cities", {
                 method: "GET",
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.no_records) {
-                    Toastify({
-                    text: "Sin registros. Creando registros de muestra...",
-                    duration: 2000,
-                    destination: "#",
-                    newWindow: false,
-                    close: false,
-                    gravity: "top",
-                    position: "right",
-                    stopOnFocus: true,
-                    style: {
-                        background: "#FFA500",
-                        color: "#000000",
-                        'text-shadow': '2px 2px 5px white',
-                    },
-                    onClick: function () { }
-                }).showToast();
+                .then(res => res.json())
+                .then(data => {
+                    if (data.no_records) {
+                        Toastify({
+                            text: "Sin registros. Creando registros de muestra...",
+                            duration: 2000,
+                            destination: "#",
+                            newWindow: false,
+                            close: false,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                            style: {
+                                background: "#FFA500",
+                                color: "#000000",
+                                'text-shadow': '2px 2px 5px white',
+                            },
+                            onClick: function () { }
+                        }).showToast();
 
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-                }
-            })
-            .catch(err => {
-                console.error("Error:", err);
-            });
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                });
         }
 
         checkCities();

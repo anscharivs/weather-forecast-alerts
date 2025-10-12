@@ -45,6 +45,10 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 
 		defer res.Body.Close()
 
+		if res.StatusCode == 404 {
+			continue
+		}
+
 		var data apiResponse
 
 		if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
@@ -79,4 +83,10 @@ func StartWeatherPolling(db *gorm.DB, cfg config.Config, interval time.Duration)
 			FetchAndStoreWeatherData(db, cfg)
 		}
 	}()
+}
+
+func ExistsInDB(db *gorm.DB, name string) bool {
+	var city models.City
+	result := db.Where("name = ?", name).First(&city)
+	return result.RowsAffected > 0
 }

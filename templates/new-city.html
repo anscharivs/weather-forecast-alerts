@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <title>Nueva ciudad</title>
+</head>
+
+<body>
+    <nav
+        class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+        <ul class="flex flex-wrap -mb-px">
+            <li class="me-2">
+                <a href="/"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                    aria-current="page">Clima reciente</a>
+            </li>
+            <li class="me-2">
+                <a href="/new-city"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Nueva
+                    ciudad</a>
+            </li>
+            <li class="me-2">
+                <a href="/registers"
+                    class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500">Todos
+                    los registros</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="min-h-screen m-10">
+
+        <form class="max-w-md mx-auto">
+            <div class="relative z-0 w-full mb-5 group">
+                <input type="text" name="new-city" id="new-city-input"
+                    class="block py-2.5 px-0 w-full text-sm text-black bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                    placeholder=" " required />
+                <label for="new-city"
+                    class="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Nueva
+                    ciudad</label>
+            </div>
+            <button id="new-city-button" type="button"
+                class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">Guardar</button>
+        </form>
+    </div>
+    </div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+
+        const newCityButton = document.getElementById('new-city-button');
+
+        newCityButton.addEventListener("click", (event) => {
+            const input = document.getElementById('new-city-input');
+
+            const formData = new FormData();
+
+            formData.append("name", input.value);
+
+            fetch("/new-city", {
+                method: "POST",
+                body: formData
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        if (res.status === 400) {
+                            return res.json().then(err => {
+                                throw new Error(err.error || `Error ${res.status}`);
+                            });
+                        }
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    Toastify({
+                        text: "¡Ciudad agregada!",
+                        duration: 2000,
+                        destination: "#",
+                        newWindow: false,
+                        close: false,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: "#FFA500",
+                            color: "#000000",
+                            'text-shadow': '2px 2px 5px white',
+                        },
+                        onClick: function () { }
+                    }).showToast();
+
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                })
+                .catch(err => {
+                    Toastify({
+                        text: err,
+                        duration: 3000,
+                        destination: "#",
+                        newWindow: false,
+                        close: false,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: "#FF0000",
+                            color: "#FFFFFF",
+                            'text-shadow': '2px 2px 5px black',
+                        },
+                        onClick: function () { }
+                    }).showToast();
+                });
+
+        })
+    </script>
+</body>
+
+</html>
