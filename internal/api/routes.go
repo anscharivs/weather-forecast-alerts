@@ -28,6 +28,12 @@ type WeatherView struct {
 	FetchedAt               string
 }
 
+type AlertView struct {
+	CityName  string
+	CreatedAt string
+	Message   string
+}
+
 func RegisterRoutes(r *gin.Engine, db *gorm.DB) {
 
 	r.GET("/", func(c *gin.Context) {
@@ -157,7 +163,37 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB) {
 		c.HTML(http.StatusOK, "registers.html", gin.H{
 			"weathers": views,
 		})
+	})
 
+	r.GET("/alerts", func(c *gin.Context) {
+
+		var alerts []models.Alert
+
+		subQuery := db.Model(&models.Alert{}).
+			Select("MAX(id)").
+			Group("city_id, type")
+
+		if err := db.Preload("City").
+			Where("id IN (?)", subQuery).
+			Order("created_at DESC").
+			Find(&alerts).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var views []AlertView
+
+		for _, w := range alerts {
+			views = append(views, AlertView{
+				CityName:  w.City.Name,
+				CreatedAt: monday.Format(w.CreatedAt, "02/01/2006 15:04", monday.LocaleEsES),
+				Message:   w.Message,
+			})
+		}
+
+		c.HTML(http.StatusOK, "alerts.html", gin.H{
+			"alerts": views,
+		})
 	})
 
 	r.GET("/new-city", func(c *gin.Context) {
@@ -167,7 +203,7 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB) {
 	r.POST("/new-city", func(c *gin.Context) {
 
 		type NewRegister struct {
-			Name string `form:"name" binding:"required,max=20"`
+			Name string `form:"name" binding:"required,max=50"`
 		}
 
 		var form NewRegister

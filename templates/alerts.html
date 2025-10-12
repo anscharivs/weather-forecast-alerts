@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <title>Weather</title>
+</head>
+
+<body>
+    <nav
+        class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+        <ul class="flex flex-wrap -mb-px">
+            <li class="me-2">
+                <a href="/"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                    aria-current="page">Clima reciente</a>
+            </li>
+            <li class="me-2">
+                <a href="/registers"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Todos
+                    los registros</a>
+            </li>
+            <li class="me-2">
+                <a href="/alerts"
+                    class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500">Alertas recientes</a>
+            </li>
+            <li class="me-2">
+                <a href="/new-city"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Nueva
+                    ciudad</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="min-h-screen m-10">
+        <div class="relative overflow-x-auto">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            Ciudad
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Hora de registro
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Mensaje
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ if .alerts }}
+                    {{ range .alerts }}
+                    <tr class="bg-white border-b dark:border-gray-700 border-gray-200">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                            {{ .CityName }}
+                        </th>
+                        <td class="px-6 py-4">
+                            {{ .CreatedAt }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ .Message }}
+                        </td>
+                    </tr>
+                    {{ else }}
+                    No hay nada
+                    {{ end }}
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>
