@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"time"
 
 	config "github.com/anscharivs/weather-forecast-alerts/internal"
 	"github.com/anscharivs/weather-forecast-alerts/models"
 	"gorm.io/gorm"
 )
+
+var BaseURL = "https://api.openweathermap.org/data/2.5/weather"
 
 type apiResponse struct {
 	Main struct {
@@ -35,7 +38,10 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 	db.Find(&cities)
 
 	for _, city := range cities {
-		url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric&lang=es", city.Name, cfg.APIKey)
+
+		escapedCity := url.QueryEscape(city.Name)
+
+		url := fmt.Sprintf("%s?q=%s&appid=%s&units=metric", BaseURL, escapedCity, cfg.APIKey)
 
 		res, err := http.Get(url)
 
