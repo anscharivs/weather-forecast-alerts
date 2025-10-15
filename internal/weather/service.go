@@ -41,7 +41,7 @@ func FetchAndStoreWeatherData(db *gorm.DB, cfg config.Config) {
 
 		escapedCity := url.QueryEscape(city.Name)
 
-		url := fmt.Sprintf("%s?q=%s&appid=%s&units=metric", BaseURL, escapedCity, cfg.APIKey)
+		url := fmt.Sprintf("%s?q=%s&appid=%s&units=metric&lang=es", BaseURL, escapedCity, cfg.APIKey)
 
 		res, err := http.Get(url)
 
