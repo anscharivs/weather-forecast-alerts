@@ -16,6 +16,7 @@ import (
 )
 
 type WeatherView struct {
+	ID                      uint
 	CityName                string
 	TemperatureInCelsius    float64
 	MinTemperatureInCelsius float64
@@ -40,10 +41,14 @@ func IndexHandler(db *gorm.DB) gin.HandlerFunc {
 		var weathers []models.Weather
 
 		subQuery := db.Model(&models.Weather{}).
-			Select("MAX(id)").
-			Group("city_id")
+			Joins("JOIN cities ON cities.id = weathers.city_id").
+			Where("weathers.deleted_at IS NULL AND cities.deleted_at IS NULL").
+			Select("MAX(weathers.id)").
+			Group("weathers.city_id")
 
-		if err := db.Preload("City").
+		if err := db.Preload("City", func(db *gorm.DB) *gorm.DB {
+			return db.Where("deleted_at IS NULL")
+		}).
 			Where("id IN (?)", subQuery).
 			Find(&weathers).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -54,6 +59,7 @@ func IndexHandler(db *gorm.DB) gin.HandlerFunc {
 
 		for _, w := range weathers {
 			views = append(views, WeatherView{
+				ID:                      w.CityID,
 				CityName:                w.City.Name,
 				TemperatureInCelsius:    math.Ceil(w.Temperature),
 				MinTemperatureInCelsius: math.Ceil(w.MinTemperature),
@@ -111,7 +117,9 @@ func RegistersHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var weathers []models.Weather
 
-		db.Preload("City").
+		db.Preload("City", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
 			Order("fetched_at DESC").
 			Find(&weathers)
 
@@ -147,7 +155,9 @@ func AlertsHandler(db *gorm.DB) gin.HandlerFunc {
 			Select("MAX(id)").
 			Group("city_id, type")
 
-		if err := db.Preload("City").
+		if err := db.Preload("City", func(db *gorm.DB) *gorm.DB {
+			return db.Unscoped()
+		}).
 			Where("id IN (?)", subQuery).
 			Order("created_at DESC").
 			Find(&alerts).Error; err != nil {
@@ -243,6 +253,71 @@ func NewCityPostHandler(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+func DeleteCityHandler(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		type CityToDelete struct {
+			CityId int `form:"id" binding:"required"`
+		}
+
+		var form CityToDelete
+
+		if err := c.ShouldBind(&form); err != nil {
+			var ve validator.ValidationErrors
+
+			if errors.As(err, &ve) {
+
+				errores := make(map[string]string)
+
+				for _, fe := range ve {
+					field := fe.Field()
+					tag := fe.Tag()
+					switch tag {
+					case "required":
+						errores[field] = "Este campo es obligatorio"
+					default:
+						errores[field] = "Valor inválido"
+					}
+				}
+
+				var erroresStr string
+
+				for _, msg := range errores {
+
+					if erroresStr != "" {
+						erroresStr += ", "
+					}
+
+					erroresStr += msg
+				}
+
+				c.JSON(http.StatusBadRequest, gin.H{"error": erroresStr})
+
+				return
+			}
+
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+			return
+		}
+
+		var city models.City
+
+		if err := db.First(&city, form.CityId).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Ciudad no encontrada"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		db.Delete(&city)
+
+		c.JSON(http.StatusOK, gin.H{"deleted": true})
+	}
+}
+
 // Manual
 
 func CitiesHandler(db *gorm.DB) gin.HandlerFunc {
@@ -286,7 +361,7 @@ func FetchHandler(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-func DeleteWeatherHandler(db *gorm.DB) gin.HandlerFunc {
+func DeleteAllWeatherHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.Weather{})
 		c.JSON(http.StatusOK, gin.H{"message": "All weather records deleted"})
